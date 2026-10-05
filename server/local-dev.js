@@ -2,15 +2,16 @@
  * LOCAL DEVELOPMENT RUNNER — never used in production.
  *
  * Vercel invokes the exported app directly (see api/index.js);
- * this file exists only so `bun run dev:server` can serve the API
+ * this file exists only so `npm run dev:server` can serve the API
  * beside the Vite dev server (which proxies /api → :3001).
  * It is the ONLY file in the project that calls app.listen().
  *
  * Memory mode: when MONGODB_URI is not configured, the runner
  * transparently boots an in-memory MongoDB (mongodb-memory-server,
- * devDependency only — never bundled for Vercel), seeds it with the
- * demo content set and continues. This keeps `bun run dev:server`
- * a one-command full-stack demo without external credentials.
+ * devDependency only — never bundled for Vercel) and creates a
+ * throwaway admin account so you can sign in at /admin/login.
+ * No demo/bulk content is seeded — the database starts empty and
+ * you add your real data through the admin panel.
  *
  * Import ordering matters: server/config/env.js snapshots
  * process.env at module load, so the memory URI + a dev JWT secret
@@ -29,7 +30,7 @@ async function bootstrapEnvironment() {
     extras.push({ memory });
   }
 
-  /* Ephemeral signing key for the demo session (in-memory only). */
+  /* Ephemeral signing key for the dev session (in-memory only). */
   if (!process.env.JWT_SECRET) {
     const { randomBytes } = await import("node:crypto");
     process.env.JWT_SECRET = randomBytes(32).toString("hex");
@@ -44,16 +45,30 @@ const extras = await bootstrapEnvironment();
 /* Server modules are imported only after the environment is final. */
 const { default: app } = await import("./app.js");
 
-let seeded = null;
+/* Memory mode — create ONLY the dev admin (content stays empty). */
 if (extras.some((extra) => extra.memory)) {
   const { connectDB } = await import("./config/db.js");
-  const { seedDemoData, DEMO_ADMIN } = await import("./scripts/seedDemo.js");
+  const { Admin } = await import("./models/Admin.js");
+  const { hashPassword } = await import("./utils/password.js");
   await connectDB();
-  seeded = await seedDemoData();
 
-  console.log("[local-dev] demo data seeded:", JSON.stringify(seeded.created));
+  const email = (process.env.ADMIN_EMAIL ?? "admin@shayanabroadhub.test").toLowerCase();
+  const password = process.env.ADMIN_PASSWORD ?? "LocalDev2026";
+
+  const existing = await Admin.findOne({ email });
+  if (!existing) {
+    await Admin.create({
+      name: process.env.ADMIN_NAME ?? "Shayan",
+      email,
+      passwordHash: await hashPassword(password),
+      role: "admin",
+      isActive: true,
+    });
+  }
+
   console.log(
-    `[local-dev] demo admin: ${DEMO_ADMIN.email} / ${DEMO_ADMIN.password} (in-memory only)`,
+    `[local-dev] in-memory database — empty content (no demo data). ` +
+      `Admin login: ${email} / ${password} (local session only)`,
   );
 }
 

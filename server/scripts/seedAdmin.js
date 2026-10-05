@@ -3,7 +3,7 @@
  * account from environment variables. Run manually, never in a
  * pipeline without secrets:
  *
- *   bun run seed:admin
+ *   npm run seed:admin
  *
  * Required env:
  *   MONGODB_URI                                — Atlas connection string

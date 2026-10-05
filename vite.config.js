@@ -23,7 +23,7 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     // Dev-only API proxy: forwards /api/* to the local Express
-    // runner (bun run dev:server on :3001). On Vercel, /api/*
+    // runner (npm run dev:server on :3001). On Vercel, /api/*
     // is handled natively by the serverless function.
     proxy: {
       "/api": {

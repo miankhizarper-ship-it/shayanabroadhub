@@ -4,9 +4,9 @@ import Reveal from "../../common/Reveal";
 import SectionHeading from "../../common/SectionHeading";
 import Button from "../../common/Button";
 import ImageWithFallback from "../../common/ImageWithFallback";
-import { unsplash, photos } from "../../../utils/images";
 import { publicApi } from "../../../lib/api";
 import { useResource } from "../../../hooks/useResource";
+import { optimizedImageSrc } from "../../../utils/images";
 
 const marks = [
   {
@@ -27,13 +27,51 @@ const marks = [
 ];
 
 /**
+ * Branded tonal tile shown for collage slots without an uploaded
+ * image (and while the page data is in flight, as a quiet skeleton).
+ * No stock photography ships in the code — empty slots stay on-brand
+ * until real imagery is uploaded from the admin Pages editor.
+ */
+function ImageSlot({ image, alt, label, className = "" }) {
+  if (!image) {
+    return (
+      <div
+        role="img"
+        aria-label={alt}
+        className={`flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-bronze-100 via-cream-deep to-bronze-200 ${className}`}
+      >
+        <span aria-hidden="true" className="font-display text-4xl italic text-bronze-600/70">
+          SA
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
+          {label}
+        </span>
+      </div>
+    );
+  }
+  return (
+    <ImageWithFallback
+      src={image}
+      alt={alt}
+      className={className}
+    />
+  );
+}
+
+/**
  * AboutPreview — the practice overview that points to /about.
- * Title/description overridable via the admin Pages editor
- * (home → about) with built-in fallbacks.
+ * Title/description and up to three collage images are editable in
+ * the admin Pages editor (home → about); empty slots render the
+ * branded tile, never stock imagery.
  */
 export default function AboutPreview() {
-  const { data } = useResource((signal) => publicApi.page("home", signal), []);
+  const { data, loading } = useResource((signal) => publicApi.page("home", signal), []);
   const about = data?.sections?.about ?? {};
+  const images = [
+    about.images?.[0]?.url ?? null,
+    about.images?.[1]?.url ?? null,
+    about.images?.[2]?.url ?? null,
+  ].map((url) => (url ? optimizedImageSrc(url, { width: 1200 }) : null));
 
   return (
     <section className="bg-cream-deep/70 py-20 sm:py-28">
@@ -77,25 +115,49 @@ export default function AboutPreview() {
           <Reveal delay={150}>
             <div className="grid grid-cols-2 gap-4 sm:gap-5">
               <figure className="col-span-2 overflow-hidden rounded-2xl shadow-rest">
-                <ImageWithFallback
-                  src={unsplash(photos.teamHands, { w: 1200, h: 700 })}
-                  alt="Hands joined over a planning table during a strategy session"
-                  className="aspect-[12/7] w-full transition-transform duration-500 hover:scale-[1.03]"
-                />
+                {loading ? (
+                  <div
+                    aria-hidden="true"
+                    className="aspect-[12/7] w-full animate-pulse bg-gradient-to-br from-cream-deep via-bronze-100/50 to-cream-deep"
+                  />
+                ) : (
+                  <ImageSlot
+                    image={images[0]}
+                    alt="The practice at work"
+                    label="Shayan Abroad Hub"
+                    className="aspect-[12/7] w-full transition-transform duration-500 hover:scale-[1.03]"
+                  />
+                )}
               </figure>
               <figure className="overflow-hidden rounded-2xl shadow-rest">
-                <ImageWithFallback
-                  src={unsplash(photos.openBook, { w: 700, h: 800 })}
-                  alt="An open reference book in warm light"
-                  className="aspect-[7/8] w-full transition-transform duration-500 hover:scale-[1.03]"
-                />
+                {loading ? (
+                  <div
+                    aria-hidden="true"
+                    className="aspect-[7/8] w-full animate-pulse bg-gradient-to-br from-cream-deep via-bronze-100/50 to-cream-deep"
+                  />
+                ) : (
+                  <ImageSlot
+                    image={images[1]}
+                    alt="Reference material in warm light"
+                    label="Shayan Abroad Hub"
+                    className="aspect-[7/8] w-full transition-transform duration-500 hover:scale-[1.03]"
+                  />
+                )}
               </figure>
               <figure className="overflow-hidden rounded-2xl shadow-rest">
-                <ImageWithFallback
-                  src={unsplash(photos.portraitSecondary, { w: 700, h: 800 })}
-                  alt="Portrait of Shayan"
-                  className="aspect-[7/8] w-full transition-transform duration-500 hover:scale-[1.03]"
-                />
+                {loading ? (
+                  <div
+                    aria-hidden="true"
+                    className="aspect-[7/8] w-full animate-pulse bg-gradient-to-br from-cream-deep via-bronze-100/50 to-cream-deep"
+                  />
+                ) : (
+                  <ImageSlot
+                    image={images[2]}
+                    alt="Portrait of Shayan"
+                    label="Shayan Abroad Hub"
+                    className="aspect-[7/8] w-full transition-transform duration-500 hover:scale-[1.03]"
+                  />
+                )}
               </figure>
             </div>
           </Reveal>

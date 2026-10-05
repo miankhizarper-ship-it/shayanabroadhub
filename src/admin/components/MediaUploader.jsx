@@ -280,7 +280,7 @@ export function FileUploader({ value, onChange, folder = "downloads", id }) {
             <TextInput
               value={urlDraft}
               onChange={(event) => setUrlDraft(event.target.value)}
-              placeholder="…or paste a file URL (/demo-files/guide.pdf)"
+              placeholder="…or paste a file URL (https://example.com/guide.pdf)"
               aria-label="File URL"
             />
             <AdminButton

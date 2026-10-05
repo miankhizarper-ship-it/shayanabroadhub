@@ -4,11 +4,13 @@ import { onAppReady } from "../../utils/boot";
 /**
  * SitePreloader — a branded first-load curtain.
  *
- * Covers the public site until its first data fetch settles (via the
- * `shb:app-ready` signal from useResource), then fades out and
- * unmounts. A 3-second failsafe guarantees the site always presents
- * itself — even on views that fetch nothing, or when the API is
- * unreachable (skeletons/empty states take over gracefully).
+ * Covers the public site until it has FULLY loaded: both the first
+ * data fetch (via the `shb:app-ready` signal from useResource) and
+ * the browser's `load` event (all assets — images, fonts — done)
+ * must settle before the curtain fades out and unmounts. A 4-second
+ * failsafe guarantees the site always presents itself — even on
+ * views that fetch nothing, or when a resource stalls (skeletons/
+ * empty states take over gracefully).
  *
  * Rendered inside PublicLayout only, so the admin CMS (which has its
  * own boot screen) is never covered by it.
@@ -19,6 +21,10 @@ export default function SitePreloader() {
 
   useEffect(() => {
     let goneTimer;
+    let dataReady = false;
+    /* A navigation may mount this layout after `load` already fired. */
+    let loadReady = document.readyState === "complete";
+
     const hide = () => {
       setPhase((current) => {
         if (current !== "visible") return current;
@@ -27,11 +33,25 @@ export default function SitePreloader() {
       });
     };
 
-    const off = onAppReady(hide);
-    const failsafe = setTimeout(hide, 3000);
+    /* Present the site only once everything has settled. */
+    const settle = () => {
+      if (dataReady && loadReady) hide();
+    };
+
+    const off = onAppReady(() => {
+      dataReady = true;
+      settle();
+    });
+    const onLoad = () => {
+      loadReady = true;
+      settle();
+    };
+    window.addEventListener("load", onLoad);
+    const failsafe = setTimeout(hide, 4000);
 
     return () => {
       off?.();
+      window.removeEventListener("load", onLoad);
       clearTimeout(failsafe);
       clearTimeout(goneTimer);
     };

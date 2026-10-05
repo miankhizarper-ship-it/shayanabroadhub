@@ -3,13 +3,24 @@ import Container from "../../common/Container";
 import Reveal from "../../common/Reveal";
 import Button from "../../common/Button";
 import ImageWithFallback from "../../common/ImageWithFallback";
-import { unsplash, photos } from "../../../utils/images";
+import { publicApi } from "../../../lib/api";
+import { useResource } from "../../../hooks/useResource";
+import { optimizedImageSrc } from "../../../utils/images";
 
 /**
  * ConsultantIntro — first-person introduction with the working
- * portrait and a signature close.
+ * portrait and a signature close. The portrait is uploaded from the
+ * admin Pages editor (home → intro); until then the slot shows a
+ * branded monogram tile — never a stock photo.
  */
 export default function ConsultantIntro() {
+  const { data, loading } = useResource((signal) => publicApi.page("home", signal), []);
+  const intro = data?.sections?.intro ?? {};
+  const portrait = intro.image?.url
+    ? optimizedImageSrc(intro.image.url, { width: 900 })
+    : null;
+  const portraitAlt = "Shayan reviewing client notes at his desk";
+
   return (
     <section className="py-20 sm:py-28">
       <Container>
@@ -21,11 +32,34 @@ export default function ConsultantIntro() {
               className="absolute -top-5 -left-5 size-24 rounded-tl-3xl border-t-2 border-l-2 border-bronze-300"
             />
             <figure className="overflow-hidden rounded-2xl shadow-lift">
-              <ImageWithFallback
-                src={unsplash(photos.portraitWorking, { w: 900, h: 1100 })}
-                alt="Shayan reviewing client notes at his desk"
-                className="aspect-[4/5] w-full"
-              />
+              {loading ? (
+                <div
+                  aria-hidden="true"
+                  className="aspect-[4/5] w-full animate-pulse bg-gradient-to-br from-cream-deep via-bronze-100/50 to-cream-deep"
+                />
+              ) : portrait ? (
+                <ImageWithFallback
+                  src={portrait}
+                  alt={portraitAlt}
+                  className="aspect-[4/5] w-full"
+                />
+              ) : (
+                <div
+                  role="img"
+                  aria-label={portraitAlt}
+                  className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-bronze-100 via-cream-deep to-bronze-200"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="font-display text-6xl italic text-bronze-600/80"
+                  >
+                    SA
+                  </span>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
+                    Shayan Abroad Hub
+                  </span>
+                </div>
+              )}
             </figure>
             <div
               aria-hidden="true"

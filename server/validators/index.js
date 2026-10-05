@@ -393,6 +393,7 @@ export function validateContact(body) {
 const PAGE_SECTION_RULES = {
   home: {
     hero: ["title", "description"],
+    intro: ["title", "description"],
     about: ["title", "description"],
     journey: ["title", "description"],
     contactCta: ["title", "description"],
@@ -443,6 +444,15 @@ export function validatePageUpdate(slug, body) {
     if (sectionValue.image !== undefined) {
       const image = imageAsset(sectionValue.image, `sections.${sectionKey}.image`, details);
       if (image) cleanSection.image = image;
+    }
+    /* Collage slots (optional) — positional, max 3; empty slots stay
+       null so the public collage keeps each upload in its place. */
+    if (sectionValue.images !== undefined && Array.isArray(sectionValue.images)) {
+      cleanSection.images = sectionValue.images
+        .slice(0, 3)
+        .map((entry, index) =>
+          imageAsset(entry, `sections.${sectionKey}.images.${index}`, details),
+        );
     }
     if (sectionValue.items !== undefined && Array.isArray(sectionValue.items)) {
       cleanSection.items = sectionValue.items

@@ -16,7 +16,9 @@ import Button from "../components/common/Button";
 import Reveal from "../components/common/Reveal";
 import CtaBand from "../components/common/CtaBand";
 import ImageWithFallback from "../components/common/ImageWithFallback";
-import { unsplash, photos } from "../utils/images";
+import { publicApi } from "../lib/api";
+import { useResource } from "../hooks/useResource";
+import { optimizedImageSrc } from "../utils/images";
 import { useSeo, personSchema } from "../utils/seo";
 
 const values = [
@@ -82,6 +84,12 @@ const highlights = [
 ];
 
 export default function About() {
+  const { data, loading } = useResource((signal) => publicApi.page("about", signal), []);
+  const portrait = data?.sections?.intro?.image?.url
+    ? optimizedImageSrc(data.sections.intro.image.url, { width: 800 })
+    : null;
+  const portraitAlt = "Portrait of Shayan in natural light";
+
   useSeo({
     title: "About the Practice",
     description:
@@ -138,11 +146,34 @@ export default function About() {
                   className="absolute -top-4 -right-4 size-24 rounded-tr-3xl border-t-2 border-r-2 border-bronze-300"
                 />
                 <div className="overflow-hidden rounded-2xl shadow-lift">
-                  <ImageWithFallback
-                    src={unsplash(photos.portraitSecondary, { w: 800, h: 1000 })}
-                    alt="Portrait of Shayan in natural light"
-                    className="aspect-[4/5] w-full"
-                  />
+                  {loading ? (
+                    <div
+                      aria-hidden="true"
+                      className="aspect-[4/5] w-full animate-pulse bg-gradient-to-br from-cream-deep via-bronze-100/50 to-cream-deep"
+                    />
+                  ) : portrait ? (
+                    <ImageWithFallback
+                      src={portrait}
+                      alt={portraitAlt}
+                      className="aspect-[4/5] w-full"
+                    />
+                  ) : (
+                    <div
+                      role="img"
+                      aria-label={portraitAlt}
+                      className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-bronze-100 via-cream-deep to-bronze-200"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="font-display text-6xl italic text-bronze-600/80"
+                      >
+                        SA
+                      </span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
+                        Shayan Abroad Hub
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <figcaption className="mt-4 text-center text-sm italic text-ink-muted">
                   Editor, strategist, and — always — a writer first.

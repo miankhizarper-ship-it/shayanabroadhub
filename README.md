@@ -58,8 +58,10 @@ npm install
 npm run seed:admin
 ```
 
-Then sign in at `https://<your-domain>/admin/login`. Use Cloudinary (or the
-admin Media uploader) to replace the demo gallery/blog images.
+Then sign in at `https://<your-domain>/admin/login` and add your real
+content — services, blogs, gallery, downloads and page copy/imagery.
+The site ships with **no demo content and no stock photos**: empty
+sections stay hidden (or show branded tiles) until you publish.
 
 ### 5. Verify the deployment
 
@@ -67,6 +69,12 @@ admin Media uploader) to replace the demo gallery/blog images.
 - `/`, `/about`, `/blogs`, `/services`, `/gallery`, `/contact`, `/downloads`
 - Direct navigation to `/blogs/<any-slug>` and `/admin/login` (SPA rewrite)
 - `/sitemap.xml`, `/robots.txt`
+
+> **If `/api/*` answers 404 after a redeploy:** make sure the deployed
+> `vercel.json` contains the `/api/(.*)` → `/api/index` rewrite (it does
+> in this repository) and that the deployment was built by Vercel
+> (Git import or CLI) — drag-and-drop uploads of the zip do not build
+> serverless functions.
 
 ## Local development
 
@@ -88,11 +96,12 @@ npm run dev:server      # API on :3001 in a second terminal
    downloading a local binary. Seed your admin with `npm run seed:admin`
    after setting `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` in `.env`.
 
-2. **Zero-config demo mode.** Leave `MONGODB_URI` unset and the dev server
-   boots an in-memory MongoDB pre-seeded with demo content and prints
-   demo admin credentials. This downloads a MongoDB binary once — if the
-   download fails an MD5 check (antivirus/proxy interference on Windows),
-   exclude the download cache from your antivirus or use option 1.
+2. **Zero-config memory mode.** Leave `MONGODB_URI` unset and the dev
+   server boots an in-memory MongoDB with **empty content** (no demo
+   data) plus a throwaway admin login printed to the console. This
+   downloads a MongoDB binary once — if the download fails an MD5
+   check (antivirus/proxy interference on Windows), exclude the download
+   cache from your antivirus or use option 1.
 
 `npm run seed:admin` reads `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`
 from `.env`; in `NODE_ENV=production` it additionally requires

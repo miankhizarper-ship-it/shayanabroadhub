@@ -24,17 +24,17 @@ import { cn } from "../../utils/cn";
  */
 
 const PAGE_TABS = [
-  { slug: "home", label: "Home", hint: "Hero, about teaser, journey and contact CTA copy." },
-  { slug: "about", label: "About", hint: "Intro, mission and vision statements." },
+  { slug: "home", label: "Home", hint: "Hero, intro, about teaser, journey and contact CTA — copy and imagery." },
+  { slug: "about", label: "About", hint: "Intro, mission and vision statements, plus the About portrait." },
   { slug: "contact", label: "Contact", hint: "Intro heading and description." },
 ];
 
 const SECTION_LABELS = {
   hero: "Hero",
+  intro: "Intro",
   about: "About teaser",
   journey: "Journey",
   contactCta: "Contact CTA",
-  intro: "Intro",
   mission: "Mission",
   vision: "Vision",
 };
@@ -74,6 +74,21 @@ export default function AdminPages() {
       ...current,
       [sectionKey]: { ...current[sectionKey], image },
     }));
+    setDirty(true);
+  };
+
+  /* Positional collage slot update — empty slots stay null so each
+     upload keeps its place in the public layout. */
+  const updateImageAt = (sectionKey, index, image) => {
+    setSections((current) => {
+      const section = current[sectionKey] ?? {};
+      const images = [...(section.images ?? [])];
+      images[index] = image;
+      return {
+        ...current,
+        [sectionKey]: { ...section, images },
+      };
+    });
     setDirty(true);
   };
 
@@ -195,17 +210,39 @@ export default function AdminPages() {
                     onChange={updateField(sectionKey, "description")}
                   />
                 </Field>
-                {sectionKey === "hero" ? (
+                {sectionKey === "hero" || sectionKey === "intro" ? (
                   <div className="sm:col-span-2">
-                    <p className="text-[13px] font-medium text-ink">Hero image</p>
+                    <p className="text-[13px] font-medium text-ink">
+                      {sectionKey === "hero" ? "Hero image" : "Portrait image"}
+                    </p>
                     <div className="mt-1.5">
                       <ImageUploader
                         id={`page-${sectionKey}-image`}
                         value={section.image ?? null}
                         onChange={(image) => updateImage(sectionKey, image)}
                         folder="profile"
-                        label="Hero image"
+                        label={sectionKey === "hero" ? "Hero image" : "Portrait image"}
                       />
+                    </div>
+                  </div>
+                ) : null}
+                {tab === "home" && sectionKey === "about" ? (
+                  <div className="sm:col-span-2">
+                    <p className="text-[13px] font-medium text-ink">Collage images</p>
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      Up to three uploads — empty slots show the branded tile, never stock imagery.
+                    </p>
+                    <div className="mt-2 grid gap-4 sm:grid-cols-3">
+                      {[0, 1, 2].map((index) => (
+                        <ImageUploader
+                          key={index}
+                          id={`page-about-image-${index}`}
+                          value={section.images?.[index] ?? null}
+                          onChange={(image) => updateImageAt(sectionKey, index, image)}
+                          folder="profile"
+                          label={["Primary (wide)", "Secondary", "Tertiary"][index]}
+                        />
+                      ))}
                     </div>
                   </div>
                 ) : null}
@@ -231,7 +268,7 @@ export default function AdminPages() {
 function defaultSectionsFor(slug) {
   switch (slug) {
     case "home":
-      return { hero: {}, about: {}, journey: {}, contactCta: {} };
+      return { hero: {}, intro: {}, about: {}, journey: {}, contactCta: {} };
     case "about":
       return { intro: {}, mission: {}, vision: {} };
     case "contact":
